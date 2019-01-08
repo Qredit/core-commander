@@ -1,0 +1,5 @@
+.vagrant
+*.log
+.commander
+node_modules
+package-lock.json
