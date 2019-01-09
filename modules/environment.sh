@@ -52,7 +52,7 @@ setup_environment ()
         touch "$commander_config"
 
         echo "CORE_REPO=https://github.com/Qredit/core" >> "$commander_config" 2>&1
-        echo "CORE_BRANCH=master" >> "$commander_config" 2>&1
+        echo "CORE_BRANCH=develop" >> "$commander_config" 2>&1
         echo "CORE_DIR=${HOME}/qredit-core" >> "$commander_config" 2>&1
         echo "CORE_DATA=${HOME}/.qredit" >> "$commander_config" 2>&1
         echo "CORE_CONFIG=${HOME}/.qredit/config" >> "$commander_config" 2>&1
@@ -77,7 +77,7 @@ setup_environment ()
         fi
 
         if ! grep -q "CORE_BRANCH" "${commander_config}"; then
-            echo "CORE_BRANCH=master" >> "$commander_config" 2>&1
+            echo "CORE_BRANCH=develop" >> "$commander_config" 2>&1
         fi
 
         if ! grep -q "CORE_DIR" "${commander_config}"; then
