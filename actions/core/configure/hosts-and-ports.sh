@@ -6,7 +6,7 @@ core_configure_hosts_and_ports ()
 
     . "$envFile"
 
-    # @xqr/core-p2p
+    # @qae/core-p2p
     read -p "Would you like to configure the P2P API? [y/N] : " choice
 
     if [[ "$choice" =~ ^(yes|y|Y) ]]; then
@@ -22,7 +22,7 @@ core_configure_hosts_and_ports ()
         fi
     fi
 
-    # @xqr/core-api
+    # @qae/core-api
     read -p "Would you like to configure the Public API? [y/N] : " choice
 
     if [[ "$choice" =~ ^(yes|y|Y) ]]; then
@@ -38,7 +38,7 @@ core_configure_hosts_and_ports ()
         fi
     fi
 
-    # @xqr/core-webhooks
+    # @qae/core-webhooks
     read -p "Would you like to configure the Webhooks API? [y/N] : " choice
 
     if [[ "$choice" =~ ^(yes|y|Y) ]]; then
@@ -54,7 +54,7 @@ core_configure_hosts_and_ports ()
         fi
     fi
 
-    # @xqr/core-graphql
+    # @qae/core-graphql
     read -p "Would you like to configure the GraphQL API? [y/N] : " choice
 
     if [[ "$choice" =~ ^(yes|y|Y) ]]; then
@@ -70,7 +70,7 @@ core_configure_hosts_and_ports ()
         fi
     fi
 
-    # @xqr/core-json-rpc
+    # @qae/core-json-rpc
     read -p "Would you like to configure the JSON-RPC API? [y/N] : " choice
 
     if [[ "$choice" =~ ^(yes|y|Y) ]]; then
