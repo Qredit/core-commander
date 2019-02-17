@@ -21,13 +21,13 @@ core_configure ()
 
     local configured=false
 
-    if [[ -d "$CORE_CONFIG" ]]; then
+    if [[ -d "$CORE_PATH_CONFIG" ]]; then
         read -p "We found an Qredit Core configuration, do you want to overwrite it? [y/N] : " choice
 
         if [[ "$choice" =~ ^(yes|y|Y) ]]; then
             __core_configure_pre
 
-            rm -rf "$CORE_CONFIG"
+            rm -rf "$CORE_PATH_CONFIG"
 
             __core_configure_network
 
@@ -96,23 +96,23 @@ __core_configure_network ()
     select opt in "${validNetworks[@]}"; do
         case "$opt" in
             "mainnet")
-                __core_configure_branch "develop"
-                __core_configure_core "mainnet"
                 __core_configure_commander "mainnet"
+                __core_configure_branch "master"
+                __core_configure_core "mainnet"
                 __core_configure_environment "mainnet"
                 break
             ;;
             "devnet")
+                __core_configure_commander "devnet"
                 __core_configure_branch "develop"
                 __core_configure_core "devnet"
-                __core_configure_commander "devnet"
                 __core_configure_environment "devnet"
                 break
             ;;
             "testnet")
+                __core_configure_commander "testnet"
                 __core_configure_branch "develop"
                 __core_configure_core "testnet"
-                __core_configure_commander "testnet"
                 __core_configure_environment "testnet"
                 break
             ;;
@@ -125,53 +125,75 @@ __core_configure_network ()
     . "$commander_config"
 }
 
-__core_configure_core ()
-{
-    if [[ ! -d "$CORE_DATA" ]]; then
-        mkdir "$CORE_DATA"
-    fi
-
-    cp -rf "${CORE_DIR}/packages/core/src/config/$1" "${CORE_CONFIG}"
-}
-
 __core_configure_commander ()
 {
     sed -i -e "s/CORE_NETWORK=$CORE_NETWORK/CORE_NETWORK=$1/g" "$commander_config"
+
+    __commander_configure_environment "$1"
+
+    mkdir -p "$CORE_PATH_DATA"
+    mkdir -p "$CORE_PATH_CONFIG"
+    mkdir -p "$CORE_PATH_CACHE"
+    mkdir -p "$CORE_PATH_LOG"
+    mkdir -p "$CORE_PATH_TEMP"
+}
+
+__core_configure_core ()
+{
+    cp -rf "${CORE_DIR}/packages/core/src/config/$1/." "${CORE_PATH_CONFIG}"
 }
 
 __core_configure_environment ()
 {
     heading "Creating Environment configuration..."
 
-    local envFile="${CORE_DATA}/.env"
+    local envFile="${CORE_PATH_CONFIG}/.env"
 
     touch "$envFile"
 
-    grep -q '^QREDIT_P2P_HOST' "$envFile" 2>&1 || echo 'QREDIT_P2P_HOST=0.0.0.0' >> "$envFile" 2>&1
-
-    if [[ "$1" = "testnet" ]]; then
-        grep -q '^QREDIT_P2P_PORT' "$envFile" 2>&1 || echo 'QREDIT_P2P_PORT=4100' >> "$envFile" 2>&1
-    fi
-
     if [[ "$1" = "mainnet" ]]; then
-        grep -q '^QREDIT_P2P_PORT' "$envFile" 2>&1 || echo 'QREDIT_P2P_PORT=4101' >> "$envFile" 2>&1
+        grep -q '^CORE_LOG_LEVEL' "${envFile}" 2>&1 || echo "CORE_LOG_LEVEL=info" >> "$envFile" 2>&1
     fi
 
     if [[ "$1" = "devnet" ]]; then
-        grep -q '^QREDIT_P2P_PORT' "$envFile" 2>&1 || echo 'QREDIT_P2P_PORT=4102' >> "$envFile" 2>&1
+        grep -q '^CORE_LOG_LEVEL' "${envFile}" 2>&1 || echo "CORE_LOG_LEVEL=debug" >> "$envFile" 2>&1
     fi
 
-    grep -q '^QREDIT_API_HOST' "$envFile" 2>&1 || echo 'QREDIT_API_HOST=0.0.0.0' >> "$envFile" 2>&1
-    grep -q '^QREDIT_API_PORT' "$envFile" 2>&1 || echo 'QREDIT_API_PORT=4103' >> "$envFile" 2>&1
+    if [[ "$1" = "testnet" ]]; then
+        grep -q '^CORE_LOG_LEVEL' "${envFile}" 2>&1 || echo "CORE_LOG_LEVEL=debug" >> "$envFile" 2>&1
+    fi
 
-    grep -q '^QREDIT_WEBHOOKS_HOST' "$envFile" 2>&1 || echo 'QREDIT_WEBHOOKS_HOST=0.0.0.0' >> "$envFile" 2>&1
-    grep -q '^QREDIT_WEBHOOKS_PORT' "$envFile" 2>&1 || echo 'QREDIT_WEBHOOKS_PORT=4104' >> "$envFile" 2>&1
+    grep -q '^CORE_DB_HOST' "${envFile}" 2>&1 || echo "CORE_DB_HOST=localhost" >> "$envFile" 2>&1
+    grep -q '^CORE_DB_PORT' "${envFile}" 2>&1 || echo "CORE_DB_PORT=5432" >> "$envFile" 2>&1
+    grep -q '^CORE_DB_USERNAME' "${envFile}" 2>&1 || echo "CORE_DB_USERNAME=${USER}" >> "$envFile" 2>&1
+    grep -q '^CORE_DB_PASSWORD' "${envFile}" 2>&1 || echo "CORE_DB_PASSWORD=password" >> "$envFile" 2>&1
+    grep -q '^CORE_DB_DATABASE' "${envFile}" 2>&1 || echo "CORE_DB_DATABASE=qredit_$1" >> "$envFile" 2>&1
 
-    grep -q '^QREDIT_GRAPHQL_HOST' "$envFile" 2>&1 || echo 'QREDIT_GRAPHQL_HOST=0.0.0.0' >> "$envFile" 2>&1
-    grep -q '^QREDIT_GRAPHQL_PORT' "$envFile" 2>&1 || echo 'QREDIT_GRAPHQL_PORT=4105' >> "$envFile" 2>&1
+    grep -q '^CORE_P2P_HOST' "$envFile" 2>&1 || echo 'CORE_P2P_HOST=0.0.0.0' >> "$envFile" 2>&1
 
-    grep -q '^QREDIT_JSONRPC_HOST' "$envFile" 2>&1 || echo 'QREDIT_JSONRPC_HOST=0.0.0.0' >> "$envFile" 2>&1
-    grep -q '^QREDIT_JSONRPC_PORT' "$envFile" 2>&1 || echo 'QREDIT_JSONRPC_PORT=8080' >> "$envFile" 2>&1
+    if [[ "$1" = "mainnet" ]]; then
+        grep -q '^CORE_P2P_PORT' "$envFile" 2>&1 || echo 'CORE_P2P_PORT=4101' >> "$envFile" 2>&1
+    fi
+
+    if [[ "$1" = "devnet" ]]; then
+        grep -q '^CORE_P2P_PORT' "$envFile" 2>&1 || echo 'CORE_P2P_PORT=4102' >> "$envFile" 2>&1
+    fi
+
+    if [[ "$1" = "testnet" ]]; then
+        grep -q '^CORE_P2P_PORT' "$envFile" 2>&1 || echo 'CORE_P2P_PORT=4100' >> "$envFile" 2>&1
+    fi
+
+    grep -q '^CORE_API_HOST' "$envFile" 2>&1 || echo 'CORE_API_HOST=0.0.0.0' >> "$envFile" 2>&1
+    grep -q '^CORE_API_PORT' "$envFile" 2>&1 || echo 'CORE_API_PORT=4103' >> "$envFile" 2>&1
+
+    grep -q '^CORE_WEBHOOKS_HOST' "$envFile" 2>&1 || echo 'CORE_WEBHOOKS_HOST=0.0.0.0' >> "$envFile" 2>&1
+    grep -q '^CORE_WEBHOOKS_PORT' "$envFile" 2>&1 || echo 'CORE_WEBHOOKS_PORT=4104' >> "$envFile" 2>&1
+
+    grep -q '^CORE_GRAPHQL_HOST' "$envFile" 2>&1 || echo 'CORE_GRAPHQL_HOST=0.0.0.0' >> "$envFile" 2>&1
+    grep -q '^CORE_GRAPHQL_PORT' "$envFile" 2>&1 || echo 'CORE_GRAPHQL_PORT=4105' >> "$envFile" 2>&1
+
+    grep -q '^CORE_JSON_RPC_HOST' "$envFile" 2>&1 || echo 'CORE_JSON_RPC_HOST=0.0.0.0' >> "$envFile" 2>&1
+    grep -q '^CORE_JSON_RPC_PORT' "$envFile" 2>&1 || echo 'CORE_JSON_RPC_PORT=8080' >> "$envFile" 2>&1
 
     success "Created Environment configuration!"
 }
@@ -181,7 +203,7 @@ __core_configure_branch ()
     heading "Changing git branch..."
 
     sed -i -e "s/CORE_BRANCH=$CORE_BRANCH/CORE_BRANCH=$1/g" "$commander_config"
-    . "${CORE_DATA}/.env"
+    . "${commander_config}"
 
     cd "$CORE_DIR"
     git reset --hard | tee -a "$commander_log"
